@@ -9,8 +9,12 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
+var ErrInvalidState = errors.New("invalid state")
+
+type parsingState int
+
 const (
-	stateStart = iota
+	stateStart parsingState = iota + 1
 	stateBackslash
 	stateDigit
 	stateCharacter
@@ -18,48 +22,46 @@ const (
 
 type state struct {
 	lastChar  rune
-	prevState int
+	prevState parsingState
 }
 
-func (s *state) next(char rune, state int) {
-	s.lastChar = char
-	s.prevState = state
-}
-
-const backSlash = rune(92)
-
-func Unpack(s string) (string, error) {
-	builder := strings.Builder{}
-	st := state{
+func newState() state {
+	return state{
 		lastChar:  0,
 		prevState: stateStart,
 	}
+}
+
+func (st *state) rememberLastChar(c rune, s parsingState) {
+	st.lastChar = c
+	st.prevState = s
+}
+
+const backSlash = '\\'
+
+func Unpack(s string) (string, error) {
+	builder := strings.Builder{}
+	st := newState()
 
 	for _, c := range s {
 		isDigit := unicode.IsDigit(c)
 		isBackslash := c == backSlash
 
-		if st.prevState == stateStart {
+		switch st.prevState {
+		case stateStart:
 			if isDigit {
 				return "", ErrInvalidString
 			}
 
 			if isBackslash {
-				st.next(0, stateBackslash)
+				st.rememberLastChar(0, stateBackslash)
 				continue
 			}
 
-			st.next(c, stateCharacter)
-
-			continue
-		}
-
-		if st.prevState == stateBackslash {
-			st.next(c, stateCharacter)
-			continue
-		}
-
-		if st.prevState == stateCharacter {
+			st.rememberLastChar(c, stateCharacter)
+		case stateBackslash:
+			st.rememberLastChar(c, stateCharacter)
+		case stateCharacter:
 			repeat := 1
 			if isDigit {
 				repeat, _ = strconv.Atoi(string(c))
@@ -70,21 +72,19 @@ func Unpack(s string) (string, error) {
 			}
 			switch {
 			case isDigit:
-				st.next(0, stateDigit)
+				st.rememberLastChar(0, stateDigit)
 			case isBackslash:
-				st.next(c, stateBackslash)
+				st.rememberLastChar(c, stateBackslash)
 			default:
-				st.next(c, stateCharacter)
+				st.rememberLastChar(c, stateCharacter)
 			}
-			continue
-		}
-
-		if st.prevState == stateDigit {
+		case stateDigit:
 			if isDigit {
 				return "", ErrInvalidString
 			}
-			st.next(c, stateCharacter)
-			continue
+			st.rememberLastChar(c, stateCharacter)
+		default:
+			return "", ErrInvalidState
 		}
 	}
 
