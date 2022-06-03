@@ -49,14 +49,55 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
+	t.Run("pop first element because queue is too long", func(t *testing.T) {
+		c := NewCache(3)
+
+		c.Set("one", 1)
+		c.Set("two", 2)
+		c.Set("three", 3)
+
+		_, ok := c.Get("one")
+		require.True(t, ok)
+		_, ok = c.Get("two")
+		require.True(t, ok)
+		_, ok = c.Get("three")
+		require.True(t, ok)
+		_, ok = c.Get("four")
+		require.False(t, ok)
+
+		c.Set("four", 4)
+
+		_, ok = c.Get("one")
+		require.False(t, ok)
+		_, ok = c.Get("two")
+		require.True(t, ok)
+		_, ok = c.Get("three")
+		require.True(t, ok)
+		_, ok = c.Get("four")
+		require.True(t, ok)
+	})
+
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(3)
+
+		c.Set("one", 1)
+		c.Set("two", 2)
+
+		_, ok := c.Get("one")
+		require.True(t, ok)
+		_, ok = c.Get("two")
+		require.True(t, ok)
+
+		c.Clear()
+
+		_, ok = c.Get("one")
+		require.False(t, ok)
+		_, ok = c.Get("two")
+		require.False(t, ok)
 	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
-	t.Skip() // Remove me if task with asterisk completed.
-
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
