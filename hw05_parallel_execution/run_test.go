@@ -76,4 +76,33 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were consume sequentially?")
 	})
+
+	t.Run("tasks without errors using require.Eventually", func(t *testing.T) {
+		tasksCount := 30
+		workersCount := 5
+		taskSleep := time.Millisecond * 10
+		totalRunTime := time.Millisecond * 70 // 5 workers, 30 tasks, 60 ms in ideal case for all tasks
+		maxErrorsCount := 1
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(taskSleep)
+				atomic.AddInt32(&runTasksCount, 1)
+				return nil
+			})
+		}
+
+		go func() {
+			err := Run(tasks, workersCount, maxErrorsCount)
+			require.NoError(t, err)
+		}()
+
+		require.Eventually(t, func() bool {
+			completedTasks := atomic.LoadInt32(&runTasksCount)
+			return completedTasks == int32(tasksCount)
+		}, totalRunTime, 1*time.Millisecond, "task not completed within timeout")
+	})
 }
