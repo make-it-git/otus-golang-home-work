@@ -12,6 +12,15 @@ import (
 	"go.uber.org/goleak"
 )
 
+func TestNegativeErrorsCount(t *testing.T) {
+	t.Run("Expect errors limit exceeded when m < 0", func(t *testing.T) {
+		tasks := make([]Task, 0)
+		err := Run(tasks, 1, -1)
+
+		require.Equal(t, err, ErrErrorsLimitExceeded)
+	})
+}
+
 func TestRun(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
@@ -65,6 +74,6 @@ func TestRun(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
-		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were consume sequentially?")
 	})
 }
