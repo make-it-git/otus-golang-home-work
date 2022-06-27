@@ -12,6 +12,15 @@ import (
 	"go.uber.org/goleak"
 )
 
+func TestNegativeErrorsCount(t *testing.T) {
+	t.Run("Expect errors limit exceeded when m < 0", func(t *testing.T) {
+		tasks := make([]Task, 0)
+		err := Run(tasks, 1, -1)
+
+		require.Equal(t, err, ErrErrorsLimitExceeded)
+	})
+}
+
 func TestRun(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
@@ -65,6 +74,35 @@ func TestRun(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
-		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were consume sequentially?")
+	})
+
+	t.Run("tasks without errors using require.Eventually", func(t *testing.T) {
+		tasksCount := 30
+		workersCount := 5
+		taskSleep := time.Millisecond * 10
+		totalRunTime := time.Millisecond * 70 // 5 workers, 30 tasks, 60 ms in ideal case for all tasks
+		maxErrorsCount := 1
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(taskSleep)
+				atomic.AddInt32(&runTasksCount, 1)
+				return nil
+			})
+		}
+
+		go func() {
+			err := Run(tasks, workersCount, maxErrorsCount)
+			require.NoError(t, err)
+		}()
+
+		require.Eventually(t, func() bool {
+			completedTasks := atomic.LoadInt32(&runTasksCount)
+			return completedTasks == int32(tasksCount)
+		}, totalRunTime, 1*time.Millisecond, "task not completed within timeout")
 	})
 }
