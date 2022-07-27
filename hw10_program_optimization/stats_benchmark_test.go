@@ -7,6 +7,6 @@ import (
 
 func BenchmarkGetDomainStat(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		_, _ = GetDomainStat(bytes.NewBufferString(data), "biz")
+		_, _ = GetDomainStat(bytes.NewBufferString(dataFixtures), "biz")
 	}
 }

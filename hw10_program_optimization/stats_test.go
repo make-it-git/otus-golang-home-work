@@ -12,7 +12,7 @@ import (
 
 func TestGetDomainStat(t *testing.T) {
 	t.Run("find 'com'", func(t *testing.T) {
-		result, err := GetDomainStat(bytes.NewBufferString(data), "com")
+		result, err := GetDomainStat(bytes.NewBufferString(dataFixtures), "com")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{
 			"browsecat.com": 2,
@@ -21,14 +21,21 @@ func TestGetDomainStat(t *testing.T) {
 	})
 
 	t.Run("find 'gov'", func(t *testing.T) {
-		result, err := GetDomainStat(bytes.NewBufferString(data), "gov")
+		result, err := GetDomainStat(bytes.NewBufferString(dataFixtures), "gov")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{"browsedrive.gov": 1}, result)
 	})
 
 	t.Run("find 'unknown'", func(t *testing.T) {
-		result, err := GetDomainStat(bytes.NewBufferString(data), "unknown")
+		result, err := GetDomainStat(bytes.NewBufferString(dataFixtures), "unknown")
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("handle error of invalid json", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(`{"Email":123456}`), "unknown")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "ffjson error: (*errors.errorString)cannot unmarshal tok:integer into Go value for string")
+		require.Nil(t, result)
 	})
 }
