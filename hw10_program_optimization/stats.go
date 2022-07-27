@@ -3,10 +3,11 @@ package hw10programoptimization
 import (
 	"bufio"
 	"fmt"
-	"github.com/valyala/fastjson"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/valyala/fastjson"
 )
 
 type DomainStat map[string]int
