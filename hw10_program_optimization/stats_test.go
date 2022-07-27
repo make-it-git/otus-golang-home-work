@@ -35,7 +35,7 @@ func TestGetDomainStat(t *testing.T) {
 	t.Run("handle error of invalid json", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(`{"Email":123456}`), "unknown")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "ffjson error: (*errors.errorString)cannot unmarshal tok:integer into Go value for string")
+		require.Equal(t, err.Error(), "'Email' field not found")
 		require.Nil(t, result)
 	})
 }

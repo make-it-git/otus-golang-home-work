@@ -3,15 +3,11 @@ package hw10programoptimization
 import (
 	"bufio"
 	"fmt"
+	"github.com/valyala/fastjson"
 	"io"
 	"regexp"
 	"strings"
 )
-
-//go:generate ffjson $GOFILE
-type User struct {
-	Email string
-}
 
 type DomainStat map[string]int
 
@@ -23,12 +19,12 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	reDomainIndex := reg.SubexpIndex("Domain")
 	result := make(DomainStat)
 	scanner := bufio.NewScanner(r)
-	var user User
 	for scanner.Scan() {
-		if err = user.UnmarshalJSON(scanner.Bytes()); err != nil {
-			return nil, fmt.Errorf("get users error: %w", err)
+		email := fastjson.GetString(scanner.Bytes(), "Email")
+		if email == "" {
+			return nil, fmt.Errorf("'Email' field not found")
 		}
-		matches := reg.FindStringSubmatch(user.Email)
+		matches := reg.FindStringSubmatch(email)
 		if len(matches) > reDomainIndex {
 			matchedDomain := strings.ToLower(matches[reDomainIndex])
 			result[matchedDomain]++

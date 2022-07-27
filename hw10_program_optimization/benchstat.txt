@@ -1,0 +1,2 @@
+name             old time/op  new time/op  delta
+GetDomainStat-8   173ms ± 0%     0ms ± 0%   ~     (p=1.000 n=1+1)
