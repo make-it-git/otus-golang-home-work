@@ -1,7 +1,6 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,14 +8,9 @@ import (
 	"strings"
 )
 
+//go:generate ffjson $GOFILE
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
 type DomainStat map[string]int
@@ -40,7 +34,7 @@ func getUsers(r io.Reader) (result users, err error) {
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
 		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
+		if err = user.UnmarshalJSON([]byte(line)); err != nil {
 			return
 		}
 		result[i] = user
@@ -49,19 +43,20 @@ func getUsers(r io.Reader) (result users, err error) {
 }
 
 func countDomains(u users, domain string) (DomainStat, error) {
+	reg, err := regexp.Compile("\\." + domain + "$")
+	if err != nil {
+		return nil, err
+	}
+
 	result := make(DomainStat)
 
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
-		}
-
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+	for i := range u {
+		user := u[i]
+		if reg.MatchString(user.Email) {
+			x := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+			result[x]++
 		}
 	}
+
 	return result, nil
 }
