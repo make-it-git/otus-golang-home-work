@@ -1,0 +1,7 @@
+goos: linux
+goarch: amd64
+pkg: github.com/make-it-git/otus-golang-home-work/hw10_program_optimization
+cpu: AMD Ryzen 5 3400G with Radeon Vega Graphics
+BenchmarkGetDomainStat-8   	      62	 173332963 ns/op
+PASS
+ok  	github.com/make-it-git/otus-golang-home-work/hw10_program_optimization	11.555s
