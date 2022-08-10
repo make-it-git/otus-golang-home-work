@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
+	validator "github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
 
@@ -19,12 +19,20 @@ type Config struct {
 }
 
 type StorageConf struct {
-	Kind string `yaml:"kind" validate:"required,oneof=db memory"`
-	Dsn  string `yaml:"dsn" validate:"required_if=Kind db"`
+	Kind       string         `yaml:"kind" validate:"required,oneof=db memory"`
+	Connection ConnectionConf `yaml:"connection" validate:"required_if=Kind db"`
 }
 
 type LoggerConf struct {
 	Level LogLevel `yaml:"level" validate:"required,oneof=debug error info"`
+}
+
+type ConnectionConf struct {
+	Host     string `yaml:"host" validate:"required"`
+	Port     uint16 `yalm:"port" validate:"required"`
+	User     string `yaml:"user" validate:"required"`
+	Database string `yaml:"database" validate:"required"`
+	Password string `yaml:"password" validate:"required"`
 }
 
 func NewConfig(configFile string) (*Config, error) {

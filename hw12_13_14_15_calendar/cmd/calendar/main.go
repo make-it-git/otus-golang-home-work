@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	cfg "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
+	storage2 "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
+	sqlstorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,7 +15,6 @@ import (
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/app"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
 var configFile string
@@ -41,7 +42,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	storage := memorystorage.New()
+	// storage := memorystorage.New()
+	storage := sqlstorage.New(config.Storage.Connection)
+	err = storage.Connect(context.Background())
+	ev := storage2.Event{
+		ID:               "A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A12",
+		Title:            "test 2",
+		StartTime:        time.Now(),
+		Duration:         time.Hour * 3,
+		Description:      nil,
+		OwnerId:          33,
+		NotificationTime: nil,
+	}
+	e := storage.Create(ev)
+	fmt.Println(e)
+	e = storage.Update(ev)
+	fmt.Println(e)
+	e = storage.Delete(ev.ID)
+	fmt.Println(e)
+	e = storage.Create(ev)
+	fmt.Println(e)
+	events, e := storage.ListMonth(ev.StartTime)
+	fmt.Println(events, e)
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)

@@ -1,5 +1,10 @@
 logger:
   level: debug
 storage:
-  kind: db
-  dsn: "test"
+  kind: db # db memory
+  connection:
+    host: "localhost"
+    port: 55432
+    user: postgres
+    password: otus_password
+    database: otus
