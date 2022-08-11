@@ -1,10 +1,11 @@
 package memorystorage
 
 import (
-	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
+	"github.com/stretchr/testify/require"
 )
 
 func ymd(date string) time.Time {
@@ -22,7 +23,7 @@ func event(id string, title string) storage.Event {
 		StartTime:        time.Time{},
 		Duration:         0,
 		Description:      nil,
-		OwnerId:          0,
+		OwnerID:          0,
 		NotificationTime: nil,
 	}
 }
@@ -42,14 +43,14 @@ func TestStorage(t *testing.T) {
 	t.Run("Should fail store event missing id", func(t *testing.T) {
 		s := New()
 		err := s.Create(event("", ""))
-		require.ErrorIs(t, err, storage.ErrMissingId)
+		require.ErrorIs(t, err, storage.ErrMissingID)
 	})
 	t.Run("Should fail store event duplicate id", func(t *testing.T) {
 		s := New()
 		err := s.Create(event("1", "test 1"))
 		require.NoError(t, err)
 		err = s.Create(event("1", "test 2"))
-		require.ErrorIs(t, err, storage.ErrDuplicateId)
+		require.ErrorIs(t, err, storage.ErrDuplicateID)
 	})
 	t.Run("Should update event", func(t *testing.T) {
 		s := New()
@@ -72,12 +73,12 @@ func TestStorage(t *testing.T) {
 	t.Run("Should fail delete event", func(t *testing.T) {
 		s := New()
 		err := s.Delete("1")
-		require.ErrorIs(t, err, storage.ErrNotFoundId)
+		require.ErrorIs(t, err, storage.ErrNotFoundID)
 	})
 	t.Run("Should fail update event", func(t *testing.T) {
 		s := New()
 		err := s.Update(event("1", "test 1"))
-		require.ErrorIs(t, err, storage.ErrNotFoundId)
+		require.ErrorIs(t, err, storage.ErrNotFoundID)
 	})
 	t.Run("Should list day", func(t *testing.T) {
 		s := New()

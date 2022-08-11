@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	validator "github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
@@ -9,17 +10,20 @@ import (
 type LogLevel string
 
 const LogLevelDebug LogLevel = "debug"
+
 const LogLevelError LogLevel = "error"
+
 const LogLevelWarn LogLevel = "warn"
+
 const LogLevelInfo LogLevel = "info"
 
 type Config struct {
 	Logger  LoggerConf  `yaml:"logger" validate:"required"`
 	Storage StorageConf `yaml:"storage" validate:"required"`
-	Http    HttpConf    `yaml:"http" validate:"required"`
+	HTTP    HTTPConf    `yaml:"http" validate:"required"`
 }
 
-type HttpConf struct {
+type HTTPConf struct {
 	Host string `yaml:"host" validate:"required"`
 	Port uint16 `yaml:"port" validate:"required"`
 }

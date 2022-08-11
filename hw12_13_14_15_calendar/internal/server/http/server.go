@@ -3,13 +3,14 @@ package internalhttp
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/app"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
-	"net/http"
 )
 
 type Server struct {
-	config *config.HttpConf
+	config *config.HTTPConf
 	logger app.Logger
 }
 
@@ -20,7 +21,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello, world"))
 }
 
-func NewServer(logger app.Logger, app Application, config *config.HttpConf) *Server {
+func NewServer(logger app.Logger, app Application, config *config.HTTPConf) *Server {
 	return &Server{
 		logger: logger,
 		config: config,

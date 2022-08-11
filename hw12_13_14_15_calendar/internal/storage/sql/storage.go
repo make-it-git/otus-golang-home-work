@@ -3,11 +3,12 @@ package sqlstorage
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/dates"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
-	"time"
 )
 
 type Storage struct {
@@ -44,13 +45,14 @@ func (s *Storage) Close(ctx context.Context) error {
 func (s *Storage) Create(event storage.Event) error {
 	_, err := s.pool.Exec(
 		context.Background(),
-		"INSERT INTO events (id, title, description, start_time, end_time, owner_id, notification_time) VALUES($1, $2, $3, $4, $5, $6, $7)",
+		`INSERT INTO events
+    	(id, title, description, start_time, end_time, owner_id, notification_time) VALUES($1, $2, $3, $4, $5, $6, $7)`,
 		event.ID,
 		event.Title,
 		event.Description,
 		event.StartTime,
 		event.StartTime.Add(event.Duration),
-		event.OwnerId,
+		event.OwnerID,
 		event.NotificationTime,
 	)
 	return err
@@ -71,7 +73,7 @@ func (s *Storage) Update(event storage.Event) error {
 		event.Description,
 		event.StartTime,
 		event.StartTime.Add(event.Duration),
-		event.OwnerId,
+		event.OwnerID,
 		event.NotificationTime,
 		event.ID,
 	)
@@ -107,10 +109,13 @@ func (s *Storage) findInRange(start time.Time, end time.Time) ([]storage.Event, 
 		start,
 		end,
 	)
+	if err != nil {
+		return nil, err
+	}
 	for rows.Next() {
 		var ev storage.Event
 		var endTime time.Time
-		err = rows.Scan(&ev.ID, &ev.Title, &ev.Description, &ev.StartTime, &endTime, &ev.OwnerId, &ev.NotificationTime)
+		err = rows.Scan(&ev.ID, &ev.Title, &ev.Description, &ev.StartTime, &endTime, &ev.OwnerID, &ev.NotificationTime)
 		if err != nil {
 			return nil, err
 		}

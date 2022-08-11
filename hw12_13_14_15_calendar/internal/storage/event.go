@@ -11,10 +11,12 @@ type Event struct {
 	StartTime        time.Time
 	Duration         time.Duration
 	Description      *string
-	OwnerId          int
+	OwnerID          int
 	NotificationTime *time.Time
 }
 
-var ErrMissingId = errors.New("id not provided")
-var ErrDuplicateId = errors.New("id duplicate")
-var ErrNotFoundId = errors.New("id not found")
+var ErrMissingID = errors.New("id not provided")
+
+var ErrDuplicateID = errors.New("id duplicate")
+
+var ErrNotFoundID = errors.New("id not found")

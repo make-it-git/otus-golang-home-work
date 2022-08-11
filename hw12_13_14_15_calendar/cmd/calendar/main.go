@@ -4,17 +4,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	cfg "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
-	memorystorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/app"
+	cfg "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -59,7 +59,7 @@ func main() {
 
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, &config.Http)
+	server := internalhttp.NewServer(logg, calendar, &config.HTTP)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

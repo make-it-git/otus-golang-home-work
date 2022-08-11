@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/config"
 	"go.uber.org/zap"
 )

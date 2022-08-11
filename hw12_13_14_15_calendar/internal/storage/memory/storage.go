@@ -1,10 +1,11 @@
 package memorystorage
 
 import (
-	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/dates"
-	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 	"sync"
 	"time"
+
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/dates"
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Storage struct {
@@ -20,13 +21,13 @@ func New() *Storage {
 
 func (s *Storage) Create(event storage.Event) error {
 	if event.ID == "" {
-		return storage.ErrMissingId
+		return storage.ErrMissingID
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for i := range s.events {
 		if s.events[i].ID == event.ID {
-			return storage.ErrDuplicateId
+			return storage.ErrDuplicateID
 		}
 	}
 	s.events = append(s.events, event)
@@ -42,7 +43,7 @@ func (s *Storage) Update(event storage.Event) error {
 			return nil
 		}
 	}
-	return storage.ErrNotFoundId
+	return storage.ErrNotFoundID
 }
 
 func (s *Storage) Delete(id string) error {
@@ -54,7 +55,7 @@ func (s *Storage) Delete(id string) error {
 			return nil
 		}
 	}
-	return storage.ErrNotFoundId
+	return storage.ErrNotFoundID
 }
 
 func (s *Storage) ListDay(date time.Time) ([]storage.Event, error) {
