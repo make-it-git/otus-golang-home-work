@@ -5,15 +5,6 @@ import (
 	"time"
 )
 
-type Storage interface {
-	Create(event Event) error
-	Update(event Event) error
-	Delete(id string) error
-	ListDay(date time.Time) ([]Event, error)
-	ListWeek(date time.Time) ([]Event, error)
-	ListMonth(date time.Time) ([]Event, error)
-}
-
 type Event struct {
 	ID               string
 	Title            string

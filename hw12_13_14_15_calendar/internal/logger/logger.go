@@ -36,14 +36,18 @@ func New(level config.LogLevel) (*Logger, error) {
 	}, nil
 }
 
-func (l Logger) Info(msg string) {
-	l.s.Info(msg)
+func (l Logger) Info(data interface{}) {
+	l.s.Info(data)
 }
 
-func (l Logger) Error(msg string) {
-	l.s.Error(msg)
+func (l Logger) Error(data interface{}) {
+	l.s.Error(data)
 }
 
-func (l Logger) Debug(msg string) {
-	l.s.Debug(msg)
+func (l Logger) Debug(data interface{}) {
+	l.s.Debug(data)
+}
+
+func (l Logger) Warn(data interface{}) {
+	l.s.Warn(data)
 }
