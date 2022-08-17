@@ -21,11 +21,17 @@ type Config struct {
 	Logger  LoggerConf  `yaml:"logger" validate:"required"`
 	Storage StorageConf `yaml:"storage" validate:"required"`
 	HTTP    HTTPConf    `yaml:"http" validate:"required"`
+	GRPC    GRPCConf    `yaml:"grpc" validate:"required"`
 }
 
 type HTTPConf struct {
 	Host string `yaml:"host" validate:"required"`
 	Port uint16 `yaml:"port" validate:"required"`
+}
+
+type GRPCConf struct {
+	Host string `yaml:"host" validate:"required"`
+	Port string `yaml:"port" validate:"required"`
 }
 
 type StorageConf struct {

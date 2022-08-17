@@ -11,7 +11,7 @@ type Event struct {
 	StartTime        time.Time
 	Duration         time.Duration
 	Description      *string
-	OwnerID          int
+	OwnerID          int32
 	NotificationTime *time.Time
 }
 
