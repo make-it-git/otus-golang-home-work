@@ -13,24 +13,27 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"net"
+	"time"
 )
 
 type Server struct {
 	eventpb.UnimplementedEventServiceServer
-	server  *grpc.Server
-	logger  *logger.Logger
-	config  *config.GRPCConf
-	storage app.Storage
+	server *grpc.Server
+	logger *logger.Logger
+	config *config.GRPCConf
+	app    *app.App
 }
 
-func NewServer(logger *logger.Logger, config *config.GRPCConf, storage app.Storage) *Server {
+func NewServer(logger *logger.Logger, config *config.GRPCConf, app *app.App) *Server {
 	grpcServer := grpc.NewServer()
 	s := &Server{
-		server:  grpcServer,
-		logger:  logger,
-		config:  config,
-		storage: storage,
+		server: grpcServer,
+		logger: logger,
+		config: config,
+		app:    app,
 	}
 	eventpb.RegisterEventServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
@@ -54,48 +57,102 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	// TODO
+	if s.server != nil {
+		s.server.GracefulStop()
+	}
+
 	return nil
 }
 
-func (s *Server) Create(ctx context.Context, in *eventpb.Event) (*eventpb.Event, error) {
-	d := in.Description.GetValue()
-	n := in.NotificationTime.AsTime()
-	ev := storage.Event{
+func pbToStorage(in *eventpb.Event) *storage.Event {
+	var desc *string
+	if in.Description.GetValue() != "" {
+		d := in.Description.GetValue()
+		desc = &d
+	}
+	var nt *time.Time
+	if in.NotificationTime.IsValid() {
+		t := in.NotificationTime.AsTime()
+		nt = &t
+	}
+	return &storage.Event{
 		ID:               in.Id,
 		Title:            in.Title,
 		StartTime:        in.StartTime.AsTime(),
 		Duration:         in.EndTime.AsTime().Sub(in.StartTime.AsTime()),
-		Description:      &d,
+		Description:      desc,
 		OwnerID:          in.OwnerId,
-		NotificationTime: &n,
+		NotificationTime: nt,
 	}
-	err := s.storage.Create(ev)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+}
+
+func storageToPb(ev *storage.Event) *eventpb.Event {
+	var ntpb *timestamppb.Timestamp
+	var descpb *wrapperspb.StringValue
+	if ev.NotificationTime != nil {
+		ntpb = timestamppb.New(*ev.NotificationTime)
+	}
+	if ev.Description != nil {
+		descpb = wrapperspb.String(*ev.Description)
 	}
 	return &eventpb.Event{
 		Id:               ev.ID,
 		Title:            ev.Title,
-		StartTime:        nil,
-		EndTime:          nil,
-		Description:      nil,
-		OwnerId:          0,
-		NotificationTime: nil,
-	}, nil
+		StartTime:        timestamppb.New(ev.StartTime),
+		EndTime:          timestamppb.New(ev.StartTime.Add(ev.Duration)),
+		Description:      descpb,
+		OwnerId:          ev.OwnerID,
+		NotificationTime: ntpb,
+	}
+}
+
+func storageToPbList(events []storage.Event) *eventpb.EventList {
+	e := new(eventpb.EventList)
+	e.Events = make([]*eventpb.Event, 0, len(events))
+	for _, ev := range events {
+		e.Events = append(e.Events, storageToPb(&ev))
+	}
+	return e
+}
+
+func (s *Server) Create(ctx context.Context, in *eventpb.Event) (*eventpb.Event, error) {
+	ev := pbToStorage(in)
+	err := s.app.CreateEvent(ctx, *ev)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return storageToPb(ev), nil
 }
 func (s *Server) Update(ctx context.Context, in *eventpb.Event) (*eventpb.Event, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+	ev := pbToStorage(in)
+	err := s.app.UpdateEvent(ctx, *ev)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	return storageToPb(ev), nil
 }
 func (s *Server) Delete(ctx context.Context, in *eventpb.EventId) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+	err := s.app.DeleteEvent(ctx, in.Id)
+	return nil, err
 }
 func (s *Server) ListDay(ctx context.Context, in *eventpb.EventDate) (*eventpb.EventList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListDay not implemented")
+	events, err := s.app.ListDay(ctx, in.Date.AsTime())
+	if err != nil {
+		return nil, err
+	}
+	return storageToPbList(events), nil
 }
 func (s *Server) ListWeek(ctx context.Context, in *eventpb.EventDate) (*eventpb.EventList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListWeek not implemented")
+	events, err := s.app.ListWeek(ctx, in.Date.AsTime())
+	if err != nil {
+		return nil, err
+	}
+	return storageToPbList(events), nil
 }
 func (s *Server) ListMonth(ctx context.Context, in *eventpb.EventDate) (*eventpb.EventList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListMonth not implemented")
+	events, err := s.app.ListMonth(ctx, in.Date.AsTime())
+	if err != nil {
+		return nil, err
+	}
+	return storageToPbList(events), nil
 }

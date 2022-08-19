@@ -45,6 +45,9 @@ func main() {
 	}
 
 	var storage app.Storage
+	var storageCloser interface {
+		Close(ctx context.Context) error
+	}
 	switch config.Storage.Kind {
 	case "db":
 		s := sqlstorage.New(config.Storage.Connection)
@@ -54,15 +57,15 @@ func main() {
 			os.Exit(1)
 		}
 		storage = s
+		storageCloser = s
 	case "memory":
 		s := memorystorage.New()
 		storage = s
 	}
 
 	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar, &config.HTTP)
-	serverGrpc := grpc.NewServer(logg, &config.GRPC, storage)
+	srvHTTP := internalhttp.NewServer(logg, &config.HTTP, calendar)
+	srvGRPC := grpc.NewServer(logg, &config.GRPC, calendar)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -73,16 +76,26 @@ func main() {
 
 	go func() {
 		defer wg.Done()
+
+		if storageCloser != nil {
+			defer func() {
+				err := storageCloser.Close(ctx)
+				if err != nil {
+					logg.Error("failed to close storage connection: " + err.Error())
+				}
+			}()
+		}
+
 		<-ctx.Done()
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err := srvHTTP.Stop(ctx); err != nil {
+			logg.Error("failed to stop http srvHTTP: " + err.Error())
 		}
-		if err := serverGrpc.Stop(ctx); err != nil {
-			logg.Error("failed to stop grpc server: " + err.Error())
+		if err := srvGRPC.Stop(ctx); err != nil {
+			logg.Error("failed to stop grpc srvGRPC: " + err.Error())
 		}
 	}()
 
@@ -90,15 +103,15 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		if err := server.Start(ctx); err != nil {
-			logg.Error("failed to start http server: " + err.Error())
+		if err := srvHTTP.Start(ctx); err != nil {
+			logg.Error("failed to start http srvHTTP: " + err.Error())
 			cancel()
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		if err := serverGrpc.Start(ctx); err != nil {
-			logg.Error("failed to start http server: " + err.Error())
+		if err := srvGRPC.Start(ctx); err != nil {
+			logg.Error("failed to start http srvGRPC: " + err.Error())
 			cancel()
 		}
 	}()

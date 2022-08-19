@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgconn"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -55,6 +56,11 @@ func (s *Storage) Create(event storage.Event) error {
 		event.OwnerID,
 		event.NotificationTime,
 	)
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		if pgErr.Code == "23505" {
+			return storage.ErrDuplicateID
+		}
+	}
 	return err
 }
 

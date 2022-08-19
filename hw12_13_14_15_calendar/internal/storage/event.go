@@ -6,12 +6,12 @@ import (
 )
 
 type Event struct {
-	ID               string
-	Title            string
-	StartTime        time.Time
-	Duration         time.Duration
-	Description      *string
-	OwnerID          int32
+	ID               string        `validate:"required,uuid4"`
+	Title            string        `validate:"required"`
+	StartTime        time.Time     `validate:"required"`
+	Duration         time.Duration `validate:"required"`
+	Description      *string       `validate:"omitempty,max=256"`
+	OwnerID          int32         `validate:"required,min=1"`
 	NotificationTime *time.Time
 }
 

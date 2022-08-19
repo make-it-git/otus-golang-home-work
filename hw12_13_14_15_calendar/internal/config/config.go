@@ -26,7 +26,7 @@ type Config struct {
 
 type HTTPConf struct {
 	Host string `yaml:"host" validate:"required"`
-	Port uint16 `yaml:"port" validate:"required"`
+	Port string `yaml:"port" validate:"required"`
 }
 
 type GRPCConf struct {
