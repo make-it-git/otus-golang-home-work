@@ -3,7 +3,8 @@ package sqlstorage
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgconn" //nolint:typecheck
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -58,7 +59,7 @@ func (s *Storage) Create(event storage.Event) error {
 	)
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		if pgErr.Code == "23505" {
-			return storage.ErrDuplicateID
+			return logic.ErrDuplicateID
 		}
 	}
 	return err

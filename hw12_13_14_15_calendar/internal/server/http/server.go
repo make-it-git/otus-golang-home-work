@@ -3,6 +3,8 @@ package internalhttp
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 	"io"
 	"net"
@@ -92,7 +94,11 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	ev := eventToStorage(&e)
 	err = s.app.CreateEvent(r.Context(), ev)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		if errors.As(err, &logic.ErrBussinessLogic{}) {
+			writeError(w, http.StatusBadRequest, err)
+		} else {
+			writeError(w, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -115,7 +121,11 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	ev := eventToStorage(&e)
 	err = s.app.UpdateEvent(r.Context(), ev)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		if errors.As(err, &logic.ErrBussinessLogic{}) {
+			writeError(w, http.StatusBadRequest, err)
+		} else {
+			writeError(w, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
@@ -126,7 +136,13 @@ func (s *Server) delete(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	id := p.ByName("id")
 	err := s.app.DeleteEvent(r.Context(), id)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		if errors.Is(err, logic.ErrNotFoundID) {
+			writeError(w, http.StatusNotFound, err)
+		} else if errors.As(err, &logic.ErrBussinessLogic{}) {
+			writeError(w, http.StatusBadRequest, err)
+		} else {
+			writeError(w, http.StatusInternalServerError, err)
+		}
 		return
 	}
 

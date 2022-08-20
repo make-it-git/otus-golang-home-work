@@ -28,7 +28,9 @@ type Server struct {
 }
 
 func NewServer(logger *logger.Logger, config *config.GRPCConf, app *app.App) *Server {
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		withServerUnaryInterceptor(logger),
+	)
 	s := &Server{
 		server: grpcServer,
 		logger: logger,
@@ -109,7 +111,7 @@ func storageToPb(ev *storage.Event) *eventpb.Event {
 func storageToPbList(events []storage.Event) *eventpb.EventList {
 	e := new(eventpb.EventList)
 	e.Events = make([]*eventpb.Event, 0, len(events))
-	for _, ev := range events {
+	for _, ev := range events { //nolint:typecheck
 		e.Events = append(e.Events, storageToPb(&ev))
 	}
 	return e

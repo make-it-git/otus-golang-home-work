@@ -25,6 +25,12 @@ version: build
 test:
 	go test -race ./internal/...
 
+run-db:
+	docker compose -f deployments/docker-compose.yaml up -d
+
+simple-integration-test: run-db
+	sh ./tests/integration.sh
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
 

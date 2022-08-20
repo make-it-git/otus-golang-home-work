@@ -31,7 +31,7 @@ func New(level config.LogLevel) (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	sugar := logger.WithOptions(zap.AddCallerSkip(2)).Sugar()
+	sugar := logger.WithOptions(zap.AddCallerSkip(1)).Sugar()
 	return &Logger{
 		s: sugar,
 	}, nil

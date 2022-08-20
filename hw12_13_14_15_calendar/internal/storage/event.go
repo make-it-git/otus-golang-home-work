@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"time"
 )
 
@@ -14,9 +13,3 @@ type Event struct {
 	OwnerID          int32         `validate:"required,min=1"`
 	NotificationTime *time.Time
 }
-
-var ErrMissingID = errors.New("id not provided")
-
-var ErrDuplicateID = errors.New("id duplicate")
-
-var ErrNotFoundID = errors.New("id not found")

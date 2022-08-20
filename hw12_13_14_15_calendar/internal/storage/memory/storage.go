@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"sync"
 	"time"
 
@@ -21,13 +22,13 @@ func New() *Storage {
 
 func (s *Storage) Create(event storage.Event) error {
 	if event.ID == "" {
-		return storage.ErrMissingID
+		return logic.ErrMissingID
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for i := range s.events {
 		if s.events[i].ID == event.ID {
-			return storage.ErrDuplicateID
+			return logic.ErrDuplicateID
 		}
 	}
 	s.events = append(s.events, event)
@@ -43,7 +44,7 @@ func (s *Storage) Update(event storage.Event) error {
 			return nil
 		}
 	}
-	return storage.ErrNotFoundID
+	return logic.ErrNotFoundID
 }
 
 func (s *Storage) Delete(id string) error {
@@ -55,7 +56,7 @@ func (s *Storage) Delete(id string) error {
 			return nil
 		}
 	}
-	return storage.ErrNotFoundID
+	return logic.ErrNotFoundID
 }
 
 func (s *Storage) ListDay(date time.Time) ([]storage.Event, error) {
