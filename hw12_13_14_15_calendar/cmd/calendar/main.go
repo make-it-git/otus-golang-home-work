@@ -33,7 +33,7 @@ func main() {
 		return
 	}
 
-	config, err := cfg.NewConfig(configFile)
+	config, err := cfg.NewCalendarConfig(configFile)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

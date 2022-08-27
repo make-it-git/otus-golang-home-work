@@ -17,11 +17,22 @@ const LogLevelWarn LogLevel = "warn"
 
 const LogLevelInfo LogLevel = "info"
 
-type Config struct {
-	Logger  LoggerConf  `yaml:"logger" validate:"required"`
-	Storage StorageConf `yaml:"storage" validate:"required"`
-	HTTP    HTTPConf    `yaml:"http" validate:"required"`
-	GRPC    GRPCConf    `yaml:"grpc" validate:"required"`
+type CalendarConfig struct {
+	Logger  LoggerConf          `yaml:"logger" validate:"required"`
+	Storage CalendarStorageConf `yaml:"storage" validate:"required"`
+	HTTP    HTTPConf            `yaml:"http" validate:"required"`
+	GRPC    GRPCConf            `yaml:"grpc" validate:"required"`
+}
+
+type SchedulerConfig struct {
+	Logger  LoggerConf            `yaml:"logger" validate:"required"`
+	Storage SchedulerStorageConf  `yaml:"storage" validate:"required"`
+	Rabbit  SchedulerRabbitmqConf `yaml:"rabbit" validate:"required"`
+	Cleanup CleanupConf           `yaml:"cleanup" validate:"required"`
+}
+
+type CleanupConf struct {
+	Days uint `yaml:"days" validate:"required"`
 }
 
 type HTTPConf struct {
@@ -34,16 +45,38 @@ type GRPCConf struct {
 	Port string `yaml:"port" validate:"required"`
 }
 
-type StorageConf struct {
-	Kind       string         `yaml:"kind" validate:"required,oneof=db memory"`
-	Connection ConnectionConf `yaml:"connection" validate:"required_if=Kind db"`
+type CalendarStorageConf struct {
+	Kind       string                 `yaml:"kind" validate:"required,oneof=db memory"`
+	Connection DatabaseConnectionConf `yaml:"connection" validate:"required_if=Kind db"`
+}
+
+type SchedulerStorageConf struct {
+	Connection DatabaseConnectionConf `yaml:"connection" validate:"required"`
+}
+
+type SchedulerRabbitmqConf struct {
+	Connection RabbitmqConnectionConf `yaml:"connection" validate:"required"`
+	Timer      RabbitmqTimerConf      `yaml:"timer" validate:"required"`
+}
+
+type RabbitmqTimerConf struct {
+	Wait uint `yaml:"wait" validate:"required"`
+}
+
+type RabbitmqConnectionConf struct {
+	Host     string `yaml:"host" validate:"required"`
+	Port     uint16 `yalm:"port" validate:"required"`
+	User     string `yaml:"user" validate:"required"`
+	Password string `yaml:"password" validate:"required"`
+	Vhost    string `yaml:"vhost" validate:"required"`
+	Exchange string `yaml:"exchange" validate:"required"`
 }
 
 type LoggerConf struct {
 	Level LogLevel `yaml:"level" validate:"required,oneof=debug error info"`
 }
 
-type ConnectionConf struct {
+type DatabaseConnectionConf struct {
 	Host     string `yaml:"host" validate:"required"`
 	Port     uint16 `yalm:"port" validate:"required"`
 	User     string `yaml:"user" validate:"required"`
@@ -51,13 +84,32 @@ type ConnectionConf struct {
 	Password string `yaml:"password" validate:"required"`
 }
 
-func NewConfig(configFile string) (*Config, error) {
+func NewCalendarConfig(configFile string) (*CalendarConfig, error) {
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 	if err != nil {
 		return nil, err
 	}
-	cfg := Config{}
+	cfg := CalendarConfig{}
+	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config: %w", err)
+	}
+	v := validator.New()
+	err = v.Struct(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to validate config: %w", err)
+	}
+	return &cfg, nil
+}
+
+func NewSchedulerConfig(configFile string) (*SchedulerConfig, error) {
+	viper.SetConfigFile(configFile)
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+	cfg := SchedulerConfig{}
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)

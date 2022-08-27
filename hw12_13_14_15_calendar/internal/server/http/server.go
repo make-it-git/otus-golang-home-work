@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	logger2 "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 	"io"
@@ -18,7 +19,7 @@ import (
 
 type Server struct {
 	config *config.HTTPConf
-	logger app.Logger
+	logger logger2.ILogger
 	server *http.Server
 	app    *app.App
 }
@@ -197,7 +198,7 @@ func (s *Server) listMonth(w http.ResponseWriter, r *http.Request, p httprouter.
 	writeData(w, http.StatusOK, storageToEventList(events))
 }
 
-func NewServer(logger app.Logger, config *config.HTTPConf, app *app.App) *Server {
+func NewServer(logger logger2.ILogger, config *config.HTTPConf, app *app.App) *Server {
 	return &Server{
 		logger: logger,
 		config: config,

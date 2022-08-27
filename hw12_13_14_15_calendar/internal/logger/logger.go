@@ -7,6 +7,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type ILogger interface {
+	Info(data interface{})
+	Error(data interface{})
+	Debug(data interface{})
+	Warn(data interface{})
+}
+
 type Logger struct {
 	s *zap.SugaredLogger
 }
