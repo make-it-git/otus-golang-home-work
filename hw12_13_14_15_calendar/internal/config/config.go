@@ -31,6 +31,11 @@ type SchedulerConfig struct {
 	Cleanup CleanupConf           `yaml:"cleanup" validate:"required"`
 }
 
+type SenderConfig struct {
+	Logger LoggerConf         `yaml:"logger" validate:"required"`
+	Rabbit SenderRabbitmqConf `yaml:"rabbit" validate:"required"`
+}
+
 type CleanupConf struct {
 	Days uint `yaml:"days" validate:"required"`
 }
@@ -59,6 +64,10 @@ type SchedulerRabbitmqConf struct {
 	Timer      RabbitmqTimerConf      `yaml:"timer" validate:"required"`
 }
 
+type SenderRabbitmqConf struct {
+	Connection RabbitmqConsumerConf `yaml:"consumer" validate:"required"`
+}
+
 type RabbitmqTimerConf struct {
 	Wait uint `yaml:"wait" validate:"required"`
 }
@@ -70,6 +79,16 @@ type RabbitmqConnectionConf struct {
 	Password string `yaml:"password" validate:"required"`
 	Vhost    string `yaml:"vhost" validate:"required"`
 	Exchange string `yaml:"exchange" validate:"required"`
+}
+
+type RabbitmqConsumerConf struct {
+	Host     string `yaml:"host" validate:"required"`
+	Port     uint16 `yalm:"port" validate:"required"`
+	User     string `yaml:"user" validate:"required"`
+	Password string `yaml:"password" validate:"required"`
+	Vhost    string `yaml:"vhost" validate:"required"`
+	Exchange string `yaml:"exchange" validate:"required"`
+	Queue    string `yaml:"queue" validate:"required"`
 }
 
 type LoggerConf struct {
@@ -110,6 +129,25 @@ func NewSchedulerConfig(configFile string) (*SchedulerConfig, error) {
 		return nil, err
 	}
 	cfg := SchedulerConfig{}
+	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config: %w", err)
+	}
+	v := validator.New()
+	err = v.Struct(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to validate config: %w", err)
+	}
+	return &cfg, nil
+}
+
+func NewSenderConfig(configFile string) (*SenderConfig, error) {
+	viper.SetConfigFile(configFile)
+	err := viper.ReadInConfig()
+	if err != nil {
+		return nil, err
+	}
+	cfg := SenderConfig{}
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)

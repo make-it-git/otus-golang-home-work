@@ -37,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	rabbit, err := rabbit2.New(config.Rabbit.Connection)
+	rabbit, err := rabbit2.NewProducer(config.Rabbit.Connection)
 	if err != nil {
 		logg.Error(err)
 		os.Exit(1)
