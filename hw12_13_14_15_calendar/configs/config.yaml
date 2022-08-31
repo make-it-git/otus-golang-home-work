@@ -1,0 +1,13 @@
+logger:
+  level: debug
+storage:
+  kind: db # db memory
+  connection:
+    host: "localhost"
+    port: 55432
+    user: postgres
+    password: otus_password
+    database: otus
+http:
+  host: 0.0.0.0
+  port: 8080
