@@ -1,4 +1,5 @@
 BIN := "./bin/calendar"
+BIN_MIGRATE := "./bin/migrate"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -7,7 +8,13 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
-run: build
+build-migrate:
+	go build -v -o $(BIN_MIGRATE) ./cmd/migrate.go
+
+migrate: build-migrate
+	$(BIN_MIGRATE) -config ./configs/config.yaml
+
+run: run-db build migrate
 	$(BIN) -config ./configs/config.yaml
 
 build-img:

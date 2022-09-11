@@ -1,11 +1,12 @@
 package memorystorage
 
 import (
-	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
+	"context"
 	"sync"
 	"time"
 
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/dates"
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -20,7 +21,7 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Create(event storage.Event) error {
+func (s *Storage) Create(_ context.Context, event storage.Event) error {
 	if event.ID == "" {
 		return logic.ErrMissingID
 	}
@@ -35,7 +36,7 @@ func (s *Storage) Create(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) Update(event storage.Event) error {
+func (s *Storage) Update(_ context.Context, event storage.Event) error {
 	for i := range s.events {
 		if s.events[i].ID == event.ID {
 			s.mu.Lock()
@@ -47,7 +48,7 @@ func (s *Storage) Update(event storage.Event) error {
 	return logic.ErrNotFoundID
 }
 
-func (s *Storage) Delete(id string) error {
+func (s *Storage) Delete(_ context.Context, id string) error {
 	for i := range s.events {
 		if s.events[i].ID == id {
 			s.mu.Lock()
@@ -59,7 +60,7 @@ func (s *Storage) Delete(id string) error {
 	return logic.ErrNotFoundID
 }
 
-func (s *Storage) ListDay(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListDay(_ context.Context, date time.Time) ([]storage.Event, error) {
 	year, month, day := date.Date()
 	r := make([]storage.Event, 0)
 	for i := range s.events {
@@ -71,12 +72,12 @@ func (s *Storage) ListDay(date time.Time) ([]storage.Event, error) {
 	return r, nil
 }
 
-func (s *Storage) ListWeek(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListWeek(_ context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.WeekRange(date)
 	return s.findInRange(start, end)
 }
 
-func (s *Storage) ListMonth(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.MonthRange(date)
 	return s.findInRange(start, end)
 }

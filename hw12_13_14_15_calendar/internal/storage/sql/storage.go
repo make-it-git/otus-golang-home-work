@@ -44,9 +44,9 @@ func (s *Storage) Close(ctx context.Context) error {
 	return nil
 }
 
-func (s *Storage) Create(event storage.Event) error {
+func (s *Storage) Create(ctx context.Context, event storage.Event) error {
 	_, err := s.pool.Exec(
-		context.Background(),
+		ctx,
 		`INSERT INTO events
     	(id, title, description, start_time, end_time, owner_id, notification_time) VALUES($1, $2, $3, $4, $5, $6, $7)`,
 		event.ID,
@@ -65,9 +65,9 @@ func (s *Storage) Create(event storage.Event) error {
 	return err
 }
 
-func (s *Storage) Update(event storage.Event) error {
+func (s *Storage) Update(ctx context.Context, event storage.Event) error {
 	_, err := s.pool.Exec(
-		context.Background(),
+		ctx,
 		`UPDATE events
 				SET title = $1,
 				description = $2,
@@ -87,30 +87,30 @@ func (s *Storage) Update(event storage.Event) error {
 	return err
 }
 
-func (s *Storage) Delete(id string) error {
-	_, err := s.pool.Exec(context.Background(), "DELETE FROM events WHERE id = $1", id)
+func (s *Storage) Delete(ctx context.Context, id string) error {
+	_, err := s.pool.Exec(ctx, "DELETE FROM events WHERE id = $1", id)
 	return err
 }
 
-func (s *Storage) ListDay(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListDay(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.DayRange(date)
-	return s.findInRange(start, end)
+	return s.findInRange(ctx, start, end)
 }
 
-func (s *Storage) ListWeek(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.WeekRange(date)
-	return s.findInRange(start, end)
+	return s.findInRange(ctx, start, end)
 }
 
-func (s *Storage) ListMonth(date time.Time) ([]storage.Event, error) {
+func (s *Storage) ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.MonthRange(date)
-	return s.findInRange(start, end)
+	return s.findInRange(ctx, start, end)
 }
 
-func (s *Storage) findInRange(start time.Time, end time.Time) ([]storage.Event, error) {
+func (s *Storage) findInRange(ctx context.Context, start time.Time, end time.Time) ([]storage.Event, error) {
 	events := make([]storage.Event, 0)
 	rows, err := s.pool.Query(
-		context.Background(),
+		ctx,
 		`SELECT id, title, description, start_time, end_time, owner_id, notification_time
 			FROM events WHERE start_time >= $1 and start_time <= $2`,
 		start,
