@@ -1,0 +1,1 @@
+ALTER TABLE events DROP column notified_handled_at;

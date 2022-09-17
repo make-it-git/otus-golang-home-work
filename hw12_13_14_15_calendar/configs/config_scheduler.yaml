@@ -16,6 +16,6 @@ rabbit:
     vhost: /
     exchange: scheduler
   timer:
-    wait: 5
+    wait: 1
 cleanup:
   days: 365

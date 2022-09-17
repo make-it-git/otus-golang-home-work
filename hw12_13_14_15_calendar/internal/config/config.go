@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
@@ -32,8 +33,9 @@ type SchedulerConfig struct {
 }
 
 type SenderConfig struct {
-	Logger LoggerConf         `yaml:"logger" validate:"required"`
-	Rabbit SenderRabbitmqConf `yaml:"rabbit" validate:"required"`
+	Logger  LoggerConf         `yaml:"logger" validate:"required"`
+	Storage SenderStorageConf  `yaml:"storage" validate:"required"`
+	Rabbit  SenderRabbitmqConf `yaml:"rabbit" validate:"required"`
 }
 
 type CleanupConf struct {
@@ -56,6 +58,10 @@ type CalendarStorageConf struct {
 }
 
 type SchedulerStorageConf struct {
+	Connection DatabaseConnectionConf `yaml:"connection" validate:"required"`
+}
+
+type SenderStorageConf struct {
 	Connection DatabaseConnectionConf `yaml:"connection" validate:"required"`
 }
 
@@ -103,14 +109,16 @@ type DatabaseConnectionConf struct {
 	Password string `yaml:"password" validate:"required"`
 }
 
-func NewCalendarConfig(configFile string) (*CalendarConfig, error) {
+func setupViper(configFile string) error {
 	viper.SetConfigFile(configFile)
+	viper.SetEnvKeyReplacer(strings.NewReplacer(`.`, `_`))
+	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
-	if err != nil {
-		return nil, err
-	}
-	cfg := CalendarConfig{}
-	err = viper.Unmarshal(&cfg)
+	return err
+}
+
+func parseConfig(cfg interface{}) (interface{}, error) {
+	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}
@@ -119,43 +127,56 @@ func NewCalendarConfig(configFile string) (*CalendarConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to validate config: %w", err)
 	}
-	return &cfg, nil
+	return cfg, nil
+}
+
+func NewCalendarConfig(configFile string) (*CalendarConfig, error) {
+	err := setupViper(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := CalendarConfig{}
+	parsed, err := parseConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	c := parsed.(CalendarConfig)
+
+	return &c, nil
 }
 
 func NewSchedulerConfig(configFile string) (*SchedulerConfig, error) {
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
+	err := setupViper(configFile)
 	if err != nil {
 		return nil, err
 	}
+
 	cfg := SchedulerConfig{}
-	err = viper.Unmarshal(&cfg)
+	parsed, err := parseConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read config: %w", err)
+		return nil, err
 	}
-	v := validator.New()
-	err = v.Struct(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to validate config: %w", err)
-	}
-	return &cfg, nil
+
+	c := parsed.(SchedulerConfig)
+
+	return &c, nil
 }
 
 func NewSenderConfig(configFile string) (*SenderConfig, error) {
-	viper.SetConfigFile(configFile)
-	err := viper.ReadInConfig()
+	err := setupViper(configFile)
 	if err != nil {
 		return nil, err
 	}
+
 	cfg := SenderConfig{}
-	err = viper.Unmarshal(&cfg)
+	parsed, err := parseConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read config: %w", err)
+		return nil, err
 	}
-	v := validator.New()
-	err = v.Struct(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to validate config: %w", err)
-	}
-	return &cfg, nil
+
+	c := parsed.(SenderConfig)
+
+	return &c, nil
 }

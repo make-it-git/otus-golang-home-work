@@ -1,0 +1,1 @@
+ALTER TABLE events ADD column notified_handled_at timestamp null;

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	rabbit2 "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/rabbit"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/sender"
+	sqlstorage "github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"sync"
@@ -42,7 +43,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	send := sender.New(logg, rabbit)
+	var storage sender.Storage
+	s := sqlstorage.New(config.Storage.Connection)
+	err = s.Connect(context.Background())
+	if err != nil {
+		logg.Error(err)
+		os.Exit(1)
+	}
+
+	storage = s
+	var storageCloser interface {
+		Close(ctx context.Context) error
+	}
+	storageCloser = s
+
+	send := sender.New(logg, storage, rabbit)
 	go send.Run()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -53,6 +68,7 @@ func main() {
 
 	go func() {
 		defer wg.Done()
+		defer storageCloser.Close(ctx)
 		<-ctx.Done()
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)

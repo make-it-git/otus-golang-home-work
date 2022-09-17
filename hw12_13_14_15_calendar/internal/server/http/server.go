@@ -25,13 +25,15 @@ type Server struct {
 }
 
 type event struct {
-	ID               string     `json:"id"`
-	Title            string     `json:"title"`
-	StartTime        time.Time  `json:"startTime"`
-	EndTime          time.Time  `json:"endTime"`
-	Description      *string    `json:"description,omitempty"`
-	OwnerID          int32      `json:"ownerId"`
-	NotificationTime *time.Time `json:"notificationTime,omitempty"`
+	ID                string     `json:"id"`
+	Title             string     `json:"title"`
+	StartTime         time.Time  `json:"startTime"`
+	EndTime           time.Time  `json:"endTime"`
+	Description       *string    `json:"description,omitempty"`
+	OwnerID           int32      `json:"ownerId"`
+	NotificationTime  *time.Time `json:"notificationTime,omitempty"`
+	NotifiedAt        *time.Time `json:"notifiedAt,omitempty"`
+	NotifiedHandledAt *time.Time `json:"notifiedHandledAt,omitempty"`
 }
 
 func eventToStorage(e *event) storage.Event {
@@ -48,13 +50,15 @@ func eventToStorage(e *event) storage.Event {
 
 func storageToEvent(ev *storage.Event) *event {
 	return &event{
-		ID:               ev.ID,
-		Title:            ev.Title,
-		StartTime:        ev.StartTime,
-		EndTime:          ev.StartTime.Add(ev.Duration),
-		Description:      ev.Description,
-		OwnerID:          ev.OwnerID,
-		NotificationTime: ev.NotificationTime,
+		ID:                ev.ID,
+		Title:             ev.Title,
+		StartTime:         ev.StartTime,
+		EndTime:           ev.StartTime.Add(ev.Duration),
+		Description:       ev.Description,
+		OwnerID:           ev.OwnerID,
+		NotificationTime:  ev.NotificationTime,
+		NotifiedAt:        ev.NotifiedAt,
+		NotifiedHandledAt: ev.NotifiedHandledAt,
 	}
 }
 

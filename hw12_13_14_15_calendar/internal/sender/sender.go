@@ -1,25 +1,33 @@
 package sender
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/rabbit"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
+	"time"
 )
 
 type Sender struct {
-	logger logger.ILogger
-	rabbit *rabbit.Rabbit
-	done   chan struct{}
+	logger  logger.ILogger
+	rabbit  *rabbit.Rabbit
+	storage Storage
+	done    chan struct{}
 }
 
-func New(logger logger.ILogger, rabbit *rabbit.Rabbit) *Sender {
+type Storage interface {
+	NotificationHandled(ctx context.Context, id string, date time.Time) error
+}
+
+func New(logger logger.ILogger, storage Storage, rabbit *rabbit.Rabbit) *Sender {
 	done := make(chan struct{})
 	return &Sender{
-		logger: logger,
-		rabbit: rabbit,
-		done:   done,
+		logger:  logger,
+		storage: storage,
+		rabbit:  rabbit,
+		done:    done,
 	}
 }
 
@@ -55,6 +63,10 @@ func (s *Sender) Run() error {
 						d,
 					),
 				)
+				err = s.storage.NotificationHandled(context.Background(), ev.ID, time.Now())
+				if err != nil {
+					s.logger.Error(err)
+				}
 			}
 		}
 	}()

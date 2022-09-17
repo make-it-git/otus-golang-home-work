@@ -34,8 +34,11 @@ func main() {
 	err = m.Up()
 	if err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
+			log.Println("Migrations up to date")
 			return
 		}
 		log.Fatal(err)
 	}
+
+	log.Println("Migrations completed")
 }
