@@ -1,4 +1,5 @@
 BIN := "./bin/calendar"
+BIN_MIGRATE := "./bin/migrate"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -7,7 +8,13 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
-run: build
+build-migrate:
+	go build -v -o $(BIN_MIGRATE) ./cmd/migrate.go
+
+migrate: build-migrate
+	$(BIN_MIGRATE) -config ./configs/config.yaml
+
+run: run-db build migrate
 	$(BIN) -config ./configs/config.yaml
 
 build-img:
@@ -25,10 +32,19 @@ version: build
 test:
 	go test -race ./internal/...
 
+run-db:
+	docker compose -f deployments/docker-compose.yaml up -d
+
+simple-integration-test: run-db
+	sh ./tests/integration.sh
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+generate:
+	protoc --go_out=internal/adapters/grpc --go-grpc_out=internal/adapters/grpc api/*.proto
 
 .PHONY: build run build-img run-img version test lint
