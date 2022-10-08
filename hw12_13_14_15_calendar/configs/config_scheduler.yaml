@@ -1,0 +1,21 @@
+logger:
+  level: debug
+storage:
+  connection:
+    host: "localhost"
+    port: 55432
+    user: postgres
+    password: otus_password
+    database: otus
+rabbit:
+  connection:
+    host: "localhost"
+    port: 5672
+    user: guest
+    password: guest
+    vhost: /
+    exchange: scheduler
+  timer:
+    wait: 5
+cleanup:
+  days: 365

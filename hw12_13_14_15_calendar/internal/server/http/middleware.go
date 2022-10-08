@@ -2,13 +2,12 @@ package internalhttp
 
 import (
 	"fmt"
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	"net/http"
 	"time"
-
-	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/app"
 )
 
-func loggingMiddleware(l app.Logger) func(handler http.Handler) http.Handler {
+func loggingMiddleware(l logger.ILogger) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

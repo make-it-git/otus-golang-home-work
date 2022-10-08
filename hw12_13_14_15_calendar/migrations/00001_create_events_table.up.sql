@@ -5,5 +5,6 @@ CREATE TABLE events (
     end_time timestamp,
     description text,
     owner_id int,
-    notification_time timestamp null
+    notification_time timestamp null,
+    notified_at timestamp null
 );

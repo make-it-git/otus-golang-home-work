@@ -5,21 +5,15 @@ import (
 	"time"
 
 	v "github.com/go-playground/validator/v10"
+	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logger"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/logic"
 	"github.com/make-it-git/otus-golang-home-work/hw12_13_14_15_calendar/internal/storage"
 )
 
 type App struct {
-	logger    Logger
+	logger    logger.ILogger
 	storage   Storage
 	validator *v.Validate
-}
-
-type Logger interface {
-	Info(data interface{})
-	Error(data interface{})
-	Debug(data interface{})
-	Warn(data interface{})
 }
 
 type Storage interface {
@@ -31,7 +25,7 @@ type Storage interface {
 	ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error)
 }
 
-func New(logger Logger, storage Storage) *App {
+func New(logger logger.ILogger, storage Storage) *App {
 	return &App{
 		logger:    logger,
 		storage:   storage,

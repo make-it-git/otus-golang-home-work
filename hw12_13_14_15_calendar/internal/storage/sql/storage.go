@@ -14,11 +14,11 @@ import (
 )
 
 type Storage struct {
-	config config.ConnectionConf
+	config config.DatabaseConnectionConf
 	pool   *pgxpool.Pool
 }
 
-func New(c config.ConnectionConf) *Storage {
+func New(c config.DatabaseConnectionConf) *Storage {
 	return &Storage{
 		config: c,
 	}
@@ -105,6 +105,40 @@ func (s *Storage) ListWeek(ctx context.Context, date time.Time) ([]storage.Event
 func (s *Storage) ListMonth(ctx context.Context, date time.Time) ([]storage.Event, error) {
 	start, end := dates.MonthRange(date)
 	return s.findInRange(ctx, start, end)
+}
+
+func (s *Storage) FindDue(ctx context.Context, date time.Time) ([]storage.Event, error) {
+	events := make([]storage.Event, 0)
+	rows, err := s.pool.Query(
+		ctx,
+		`SELECT id, title, description, start_time, end_time, owner_id, notification_time
+			FROM events WHERE notification_time <= $1 AND notified_at IS NULL`,
+		date,
+	)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var ev storage.Event
+		var endTime time.Time
+		err = rows.Scan(&ev.ID, &ev.Title, &ev.Description, &ev.StartTime, &endTime, &ev.OwnerID, &ev.NotificationTime)
+		if err != nil {
+			return nil, err
+		}
+		ev.Duration = endTime.Sub(ev.StartTime)
+		events = append(events, ev)
+	}
+	return events, nil
+}
+
+func (s *Storage) Notified(ctx context.Context, id string, date time.Time) error {
+	_, err := s.pool.Exec(ctx, "UPDATE events SET notified_at = $1 WHERE id = $2", date, id)
+	return err
+}
+
+func (s *Storage) CleanupTill(ctx context.Context, date time.Time) error {
+	_, err := s.pool.Exec(ctx, "DELETE FROM events WHERE end_time <= $1", date)
+	return err
 }
 
 func (s *Storage) findInRange(ctx context.Context, start time.Time, end time.Time) ([]storage.Event, error) {
