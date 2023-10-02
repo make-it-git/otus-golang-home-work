@@ -111,7 +111,7 @@ func (s *Storage) FindDue(ctx context.Context, date time.Time) ([]storage.Event,
 	events := make([]storage.Event, 0)
 	rows, err := s.pool.Query(
 		ctx,
-		`SELECT id, title, description, start_time, end_time, owner_id, notification_time
+		`SELECT id, title, description, start_time, end_time, owner_id, notification_time, notified_at
 			FROM events WHERE notification_time <= $1 AND notified_at IS NULL`,
 		date,
 	)
@@ -121,7 +121,16 @@ func (s *Storage) FindDue(ctx context.Context, date time.Time) ([]storage.Event,
 	for rows.Next() {
 		var ev storage.Event
 		var endTime time.Time
-		err = rows.Scan(&ev.ID, &ev.Title, &ev.Description, &ev.StartTime, &endTime, &ev.OwnerID, &ev.NotificationTime)
+		err = rows.Scan(
+			&ev.ID,
+			&ev.Title,
+			&ev.Description,
+			&ev.StartTime,
+			&endTime,
+			&ev.OwnerID,
+			&ev.NotificationTime,
+			&ev.NotifiedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -136,6 +145,11 @@ func (s *Storage) Notified(ctx context.Context, id string, date time.Time) error
 	return err
 }
 
+func (s *Storage) NotificationHandled(ctx context.Context, id string, date time.Time) error {
+	_, err := s.pool.Exec(ctx, "UPDATE events SET notified_handled_at = $1 WHERE id = $2", date, id)
+	return err
+}
+
 func (s *Storage) CleanupTill(ctx context.Context, date time.Time) error {
 	_, err := s.pool.Exec(ctx, "DELETE FROM events WHERE end_time <= $1", date)
 	return err
@@ -145,7 +159,9 @@ func (s *Storage) findInRange(ctx context.Context, start time.Time, end time.Tim
 	events := make([]storage.Event, 0)
 	rows, err := s.pool.Query(
 		ctx,
-		`SELECT id, title, description, start_time, end_time, owner_id, notification_time
+		`SELECT
+			id, title, description, start_time, end_time,
+			owner_id, notification_time, notified_at, notified_handled_at
 			FROM events WHERE start_time >= $1 and start_time <= $2`,
 		start,
 		end,
@@ -156,7 +172,17 @@ func (s *Storage) findInRange(ctx context.Context, start time.Time, end time.Tim
 	for rows.Next() {
 		var ev storage.Event
 		var endTime time.Time
-		err = rows.Scan(&ev.ID, &ev.Title, &ev.Description, &ev.StartTime, &endTime, &ev.OwnerID, &ev.NotificationTime)
+		err = rows.Scan(
+			&ev.ID,
+			&ev.Title,
+			&ev.Description,
+			&ev.StartTime,
+			&endTime,
+			&ev.OwnerID,
+			&ev.NotificationTime,
+			&ev.NotifiedAt,
+			&ev.NotifiedHandledAt,
+		)
 		if err != nil {
 			return nil, err
 		}

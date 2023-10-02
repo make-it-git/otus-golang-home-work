@@ -8,51 +8,28 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 build: build-calendar build-sender build-scheduler build-migrate
 
 build-calendar:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	CGO_ENABLED=0 go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 build-sender:
-	go build -v -o $(BIN)_sender ./cmd/sender
+	CGO_ENABLED=0 go build -v -o $(BIN)_sender ./cmd/sender
 
 build-scheduler:
-	go build -v -o $(BIN)_scheduler ./cmd/scheduler
+	CGO_ENABLED=0 go build -v -o $(BIN)_scheduler ./cmd/scheduler
 
 build-migrate:
-	go build -v -o $(BIN_MIGRATE) ./cmd/migrate.go
-
-run: run-calendar run-sender run-scheduler run-migrate
-
-run-calendar: build-calendar run-db
-	$(BIN) -config ./configs/config.yaml
-
-run-sender: build-sender run-db
-	$(BIN)_sender -config ./configs/config_sender.yaml
-
-run-scheduler: build-scheduler run-db
-	$(BIN)_scheduler -config ./configs/config_scheduler.yaml
-
-run-migrate: build-migrate run-db
-	$(BIN_MIGRATE) -config ./configs/config.yaml
-
-build-img:
-	docker build \
-		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
-
-run-img: build-img
-	docker run $(DOCKER_IMG)
-
-version: build
-	$(BIN) version
+	CGO_ENABLED=0 go build -v -o $(BIN_MIGRATE) ./cmd/migrate.go
 
 test:
 	go test -race ./internal/...
 
-run-db:
+up:
 	docker compose -f deployments/docker-compose.yaml up -d
 
-simple-integration-test: run-db
-	sh ./tests/integration.sh
+down:
+	docker compose -f deployments/docker-compose.yaml down
+
+integration-tests: up
+	go test -race ./tests --tags integration
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
@@ -63,4 +40,4 @@ lint: install-lint-deps
 generate:
 	protoc --go_out=internal/adapters/grpc --go-grpc_out=internal/adapters/grpc api/*.proto
 
-.PHONY: build run build-img run-img version test lint
+.PHONY: build build-calendar build-sender build-scheduler build-migrate test up simple-integration-test install-lint-deps lint generate
